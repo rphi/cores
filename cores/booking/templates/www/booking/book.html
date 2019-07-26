@@ -1,0 +1,97 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container">
+    <h2>Booking details: <span style="font-family: monospace">{{bookable.host.iss_no}}</span></h2>
+
+    <div class="row mb-3">
+        <div class="col-md-5">
+            <div class="card p-3">
+                <h5>Details</h5>
+                <ul>
+                    <li><strong>Hostname:</strong> {{bookable.host.hostname}}</li>
+                    <li><strong>IP:</strong> <code>{{bookable.host.ip}}</code></li>
+                    <li><strong>Serial:</strong> {{bookable.host.serial_no}}</li>
+                    <li><strong>Asset:</strong> {{bookable.host.asset_no}}</li>
+                    <li><strong>Disks:</strong> {{bookable.host.diskvendor}}</li>
+                    <li><strong>Hardware:</strong> {{bookable.host.hardware}}</li>
+                    <li><strong>Rack:</strong> {{bookable.host.rack}}</li>
+                    <li><strong>Owner: </strong> {{bookable.host.owner}}</li>
+                    <li><strong>Group: </strong> {{bookable.host.group}}</li>
+                    <li><strong>Details:</strong> {{bookable.host.details}}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <form method="POST">                
+                {% bootstrap_form form exclude='start, end, bookable'%}
+                <div class="form-group">
+                    <label for="datepicker">When?</label>
+                    <div class="input-daterange input-group" id="datepicker">
+                        <input type="text" placeholder="yyyy-mm-dd" class="input-sm form-control" name="start" required value="{{form.start.value|date:'Y-m-d'}}" />
+                        <div class="input-group-prepend input-group-append">
+                            <span class="input-group-text">to</span>
+                        </div>
+                        <input type="text" placeholder="yyyy-mm-dd" class="input-sm form-control" name="end" required value="{{form.end.value|date:'Y-m-d'}}"/>
+                    </div>
+                </div>
+
+                {% csrf_token %}
+                
+                {% bootstrap_button 'Save' button_type='submit' button_class='float-right btn-primary' %}
+            </form>
+        </div>
+    </div>
+
+    <h5>Availability</h5>
+    <table class="table table-sm availability_table">
+        <tr>
+            {% for a in availability %}
+            <td class="{% if a %}free{% else %}busy{% endif %}"></td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td>Today</td>
+            <td>+1d</td>
+            <td>+2d</td>
+            <td>+3d</td>
+            <td>+4d</td>
+            <td>+5d</td>
+            <td>+6d</td>
+            <td>+7d</td>
+            <td>+8d</td>
+            <td>+9d</td>
+            <td>+10d</td>
+            <td>+11d</td>
+            <td>+12d</td>
+            <td>+13d</td>
+        </tr>
+    </table>
+
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+$('.input-daterange').datepicker({
+    format: "yyyy-mm-dd",
+    startDate: Date(),
+    maxViewMode: 1,
+    todayBtn: "linked",
+    language: "en-GB",
+    todayHighlight: true
+});
+</script>
+
+{% endblock %}
+
+{% block pagestyles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" />
+<link rel="stylesheet" href="{% static 'booking/css/availabilitytable.css' %}"/>
+{% endblock %}

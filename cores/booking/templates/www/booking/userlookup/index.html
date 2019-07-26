@@ -1,0 +1,31 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="container">
+    <div class="row align-items-center justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Lookup user's bookings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        {% bootstrap_form form %}
+                        
+                        <button type="submit" class="btn btn-primary">Load profile</button>
+                        <a href="{% url 'dash' %}" class="btn btn-secondary">Cancel and go back</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block pagescripts %}
+
+{% endblock %}

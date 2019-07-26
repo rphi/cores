@@ -1,0 +1,48 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="container">
+    <div style="float: right;">
+        <span class="mr-3">Display:</span>
+        <div class="btn-group">
+            <a class="btn btn-outline-primary" href="{% url 'livelist' %}">Hosts</a>
+            <a class="btn btn-outline-secondary active" href="#">Unknown</a>
+            <a class="btn btn-outline-warning" href="{% url 'livedash' %}">Alerts</a>
+        </div>
+    </div>
+    <h2>Unknown hosts</h2>
+    <p>These hosts have been seen and are not in our database. To manage conflicts, visit the <a href="{% url 'livedash' %}">Live dashboard</a>.</p>
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+            <th scope="col">Address</th>
+            <th scope="col">MAC</th>
+            <th scope="col">Vendor</th>
+            <th scope="col">First seen</th>
+            <th scope="col">Location</th>
+            <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% regroup uscs by lab as usc_list %}
+            {% for lab in usc_list %}
+            <tr>
+                <th colspan="6" class="table-primary text-center">Location: {{lab.grouper | default:'Unknown'}}</th>
+            </tr>
+            {% for c in lab.list %}
+            <tr>
+            <th scope="row">{{c.ip.ip}}</th>
+            <td>{{c.mac}}</td>
+            <td>{{c.safe_OUI_org}}</td>
+            <td>{{c.scan.timestamp}}</td>
+            <td>{{c.lab | default:'-'}}</td>
+            <td>{{c.status}}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

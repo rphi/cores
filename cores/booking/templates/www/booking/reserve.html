@@ -1,0 +1,66 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container">
+    <h2>Reserving <span style="font-family: monospace">{{bookable.host.hostname}}</span>:</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-5">
+            <div class="card p-3">
+                <h5>Details</h5>
+                <ul>
+                    <li><strong>Hostname:</strong> {{bookable.host.hostname}}</li>
+                    <li><strong>IP:</strong> <code>{{bookable.host.ip}}</code></li>
+                    <li><strong>Serial:</strong> {{bookable.host.serial_no}}</li>
+                    <li><strong>Asset:</strong> {{bookable.host.asset_no}}</li>
+                    <li><strong>Disks:</strong> {{bookable.host.diskvendor}}</li>
+                    <li><strong>Hardware:</strong> {{bookable.host.hardware}}</li>
+                    <li><strong>Rack:</strong> {{bookable.host.rack}}</li>
+                    <li><strong>Owner: </strong> {{bookable.host.owner}}</li>
+                    <li><strong>Group: </strong> {{bookable.host.group}}</li>
+                    <li><strong>Details:</strong> {{bookable.host.details}}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <form method="POST">                
+                {% bootstrap_form form exclude='start, bookable'%}
+                <div class="form-group">
+                    <label for="datepicker">Starting</label>
+                    <input id="datepicker" type="text" class="input-sm form-control" name="start" required value="{{form.start.value|date:'Y-m-d'}}" placeholder="yyyy-mm-dd" />
+                </div>
+
+                {% csrf_token %}
+                
+                {% bootstrap_button 'Save' button_type='submit' button_class='float-right btn-primary' %}
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+$('#datepicker').datepicker({
+    format: "yyyy-mm-dd",
+    startDate: Date(),
+    maxViewMode: 1,
+    todayBtn: "linked",
+    language: "en-GB",
+    todayHighlight: true
+});
+</script>
+
+{% endblock %}
+
+{% block pagestyles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" />
+<link rel="stylesheet" href="{% static 'booking/css/availabilitytable.css' %}"/>
+{% endblock %}

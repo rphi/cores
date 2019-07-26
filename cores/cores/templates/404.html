@@ -1,0 +1,28 @@
+{% extends 'www/_base.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row align-items-center justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>404. Not found.</h3>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                    <h5>
+                        Sorry {{user.first_name}}, I can't do that for you.
+                    </h5>
+                    {% endif %}
+                    <p>
+                        The resource you've requested can't be found. It may have moved or been deleted. 
+                        Check your URL, or <a href="{% url 'dash' %}">go home</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

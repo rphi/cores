@@ -1,0 +1,7 @@
+table.availability_table .free {
+    background-color: green;
+}
+
+table.availability_table .busy {
+    background-color: red;
+}

@@ -1,0 +1,223 @@
+{% extends 'www/_base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container">
+    <div style="float: right;">
+        <span class="mr-3">Display:</span>
+        <div class="btn-group">
+            <a class="btn btn-outline-primary" href="{% url 'livelist' %}">Hosts</a>
+            <a class="btn btn-outline-secondary" href="{% url 'liveunknown' %}">Unknown</a>
+            <a class="btn btn-outline-warning active" href="#">Alerts</a>
+        </div>
+    </div>
+    
+
+    <h3>Live Scan Dashboard</h3>
+
+    <div class="row">
+        <div class="col">
+            <div class="card text-center py-2">
+                <h5>Last scan:</h5>
+                <span style="font-size: 3rem;">{{lastscan.timestamp | date:'P' | default:'none' }}</span>
+                {{ lastscan.timestamp | date }} <br/>
+                <span class="small text-muted">via {{lastscan.agent_identifier}}</span>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-center py-2">
+                <h5>New conflicts:</h5>
+                <span style="font-size: 4rem;">{{conflictcount | default:'none'}}</span>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-center py-2">
+                <h5>Monitored NICs:</h5>
+                <span style="font-size: 4rem;">{{niccount | default:'none'}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col">
+            <div class="row">
+                <div class="col-md-2">
+                    <h4>Conflicts:</h4>
+                </div>
+                <div class="col text-right text-muted small mb-3">
+                    These are re-checked on every scan and every night, and will mark themselves as resolved if they no longer exist.<br/>
+                    Ignoring a conflict will hide it for 3 months.
+                </div>
+            </div>
+            
+            <div id="conflicts">
+                {% if conflicts %}
+                    {% for c in conflicts %}
+                        {% if c.nic %}
+                        <div class="conflict card p-2 mb-2" data-conflict-type="nic" data-conflict-id="{{c.id}}">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <h5>
+                                        <span class="badge badge-warning">NIC conflict</span>
+                                    </h5>
+                                    {{c.nic.host | default:'unknown host'}}
+                                </div>
+                                <div class="col-md-5">
+                                    <code>{{c.nic.model}}</code> / <code>{{c.nic.mac}}</code> was <code>{{c.nic.ip}}</code>, now <code>{{c.newip.ip}}</code>
+                                    <br/>
+                                    <span class="small">
+                                        Discovered {{c.scan.timestamp | default:'21/01/1970 00:00:00'}} by {{c.scan.agent_identifier | default:'unknown agent'}} 
+                                        <a href="/admin/inventory/nic/{{c.nic.id}}">View this NIC in admin.</a>
+                                    </span>
+                                </div>
+                                <div class="col-md-5 text-right">
+                                    <div class="btn-group my-2">
+                                        <a class="btn btn-success" href="{% url 'fixnc' c.id %}">Accept</a>
+                                        <a class="btn btn-secondary" href="{% url 'resolved' c.id %}">Mark resolved</a>
+                                        <a class="btn btn-danger" href="{% url 'ignore' c.id %}">Ignore</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif c.host %}
+                        <div class="conflict card p-2 mb-2" data-conflict-type="location" data-conflict-id="{{c.id}}">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <h5>
+                                        <span class="badge badge-info">Location conflict</span>
+                                    </h5>
+                                    {{c.host}}
+                                </div>
+                                <div class="col-md-5">
+                                    Host was in <code>{{c.host.rack}}</code>, now <code>{{c.newlab | default:'unknown'}}</code>
+                                    <br/>
+                                    <span class="small">
+                                        Discovered {{c.scan.timestamp | default:'21/01/1970 00:00:00'}}  by {{c.scan.agent_identifier | default:'unknown agent'}}
+                                        <a href="/admin/inventory/host/{{c.host.id}}">View this host in admin.</a>
+                                    </span>
+                                </div>
+                                <div class="col-md-5 text-right">
+                                    <div class="btn-group my-2">
+                                        <a class="btn btn-info" href="{% url 'fixlc' c.id %}">Fix now</a>
+                                        <a class="btn btn-secondary" href="{% url 'resolved' c.id %}">Mark resolved</a>
+                                        <a class="btn btn-danger" href="{% url 'ignore' c.id %}">Ignore</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="conflict card p-2 mb-2" data-conflict-type="unknown" data-conflict-id="{{c.id}}" data-mac="{{c.mac | slugify}}">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <h5>
+                                        <span class="badge badge-dark">New device</span>
+                                    </h5>
+                                </div>
+                                <div class="col-md-5">
+                                    Found new MAC address <code>{{c.mac}}</code>, with IP <code>{{c.ip.ip}}</code> from vendor <code>{{c.safe_OUI_org}}</code> {% if c.lab %}in <code>{{c.lab}}</code>{% endif %}
+                                    <br/>
+                                    <span class="small">
+                                        Discovered {{c.scan.timestamp | default:'21/01/1970 00:00:00'}}  by {{c.scan.agent_identifier | default:'unknown agent'}}
+                                    </span>
+                                </div>
+                                <div class="col-md-5 text-right">
+                                    <div class="btn-group my-2">
+                                        <button type="button" class="btn btn-info" onclick="window.open('{% url 'admin:inventory_nic_add' %}?mac={{c.mac}}&_popup=1&_cores_ctype=unknown&_cores_cid={{c.id}}','popup','width=800,height=700')">Fix now</button>
+                                        <a class="btn btn-secondary" href="{% url 'resolved' c.id %}">Mark resolved</a>
+                                        <a class="btn btn-danger" href="{% url 'ignore' c.id %}">Ignore</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                <div class="text-center">
+                    <h5>No conflicts to show. You're all done!</h5>
+                </div>
+                {% endif %}
+            </div>
+            <h4>Offline hosts:</h4>
+            <div id="offlines">
+                {% if offlines %}
+                    {% for o in offlines %}
+                        <div class="conflict card p-2 mb-2">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <h5>
+                                        <span class="badge badge-danger">Offline box</span>
+                                    </h5>
+                                    {{o.host | default:'unknown host'}}
+                                </div>
+                                <div class="col-md-5">
+                                    <code>{{o.host}}</code> in lab <code>{{o.host.rack.lab | default:'unknown lab'}}</code> was last seen at <code>{{o.host.lastseen}}</code> which was <code>{{o.host.lastseen | timesince}}</code> ago
+                                    <br/>
+                                    <span class="small">
+                                        Flagged {{o.timestamp | default:'21/01/1970 00:00:00'}}
+                                    </span>
+                                </div>
+                                <div class="col-md-5 text-right">
+                                    <div class="btn-group my-2">
+                                        <button type="button" class="btn btn-info" onclick="window.open('{% url 'admin:inventory_host_change' o.host.id %}?_popup=1&_cores_ctype=offline&_cores_cid={{o.id}}','popup','width=1000,height=700')">Fix now</button>
+                                        <a class="btn btn-secondary" href="{% url 'resolved-offline' o.id %}">Mark resolved</a>
+                                        <a class="btn btn-danger" href="{% url 'ignore-offline' o.id %}">Ignore</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center">
+                    <h5>Everything seems to be alive... for now!</h5>
+                </div>
+                {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+
+<script>
+
+function dismissChangeRelatedObjectPopup(popup, value, obj){
+    return dismissAddRelatedObjectPopup(popup, value, obj);
+}
+
+// callback from built in Django admin popups
+function dismissAddRelatedObjectPopup(popup, value, obj) {
+    console.log(popup);
+    console.log(value);
+    console.log(obj);
+
+    let conflicttype = popup.location.search.match(/&_cores_ctype=([^&]+)/);
+    let conflictid = popup.location.search.match(/&_cores_cid=(\d+)/);
+
+    console.log(conflicttype);
+    console.log(conflictid);
+
+    if (!conflicttype || !conflictid) { alert("Error. Invalid popup return conflicttype/id."); return; }
+
+    console.log(conflicttype[1]);
+    console.log(conflictid[1]);
+
+    switch (conflicttype[1]) {
+        case 'unknown':
+            // this was adding a new nic
+            popup.opener.location.href = '/live/resolved/' + conflictid[1];
+            popup.close();
+            return;
+        case 'offline':
+            // this was fixing an offline host
+            popup.opener.location.href = '/live/resolved/o/' + conflictid[1];
+            popup.close();
+            return;
+    }
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h4>Booking summary:</h4>
+            <h3>{{querieduser.get_full_name}}</h3>
+            <p>Username: {{querieduser.username}}</p>
+            <p>Email: {{querieduser.email}}</p>
+            <p>Last login: {{querieduser.last_login}}</p>
+            {% if user.is_superuser %}
+            <p>
+                <a class="btn btn-outline-primary" href="/impersonate/{{querieduser.id}}/">Impersonate</a>
+            </p>
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <div class="card p-2">
+                <h5>Bookings</h5>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col">From</th>
+                            <th scope="col">To</th>
+                            <th scope="col">Reason</th>
+                            <th scope="col">Host</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    {% for e in currentbookings %}
+                    <tr>
+                        <td>{{e.start | date:"d/M"}}</td>
+                        <td>{{e.end | date:"d/M"}}</td>
+                        <td>{{e.comment}}</td>
+                        <td>
+                            <a href="{% url 'host' e.bookable.id %}">{{e.bookable.host.hostname}}</a><br/>
+                            <code>{{e.bookable.host.ip}}</code>
+                        </td>
+                        <td class="text-center table-success align-middle">{{e.end | timeuntil}} left</td>
+                    </tr>
+                    {% endfor %}
+                    {% for e in upcomingbookings %}
+                    <tr>
+                        <td>{{e.start | date:"d/M"}}</td>
+                        <td>{{e.end | date:"d/M"}}</td>
+                        <td>{{e.comment}}</td>
+                        <td>
+                            <a href="{% url 'host' e.bookable.id %}">{{e.bookable.host.hostname}}</a><br/>
+                            <code>{{e.bookable.host.ip}}</code>
+                        </td>
+                        <td class="text-center table-warning align-middle">Starts in {{e.start | timeuntil}}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for e in pastbookings %}
+                    <tr>
+                        <td>{{e.start | date:"d/M"}}</td>
+                        <td>{{e.end | date:"d/M"}}</td>
+                        <td>{{e.comment}}</td>
+                        <td>
+                            <a href="{% url 'host' e.bookable.id %}">{{e.bookable.host.hostname}}</a><br/>
+                            <code>{{e.bookable.host.ip}}</code>
+                        </td>
+                        <td class="text-center table-secondary align-middle">Ended {{e.end | timesince}} ago</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not upcomingbookings and not currentbookings and not pastbookings %}
+                        <tr>
+                            <td colspan="4" class="text-center">No bookings to show.</td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="card mt-3 p-2">
+                <h5>Reservations</h5>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col">From</th>
+                            <th scope="col">To</th>
+                            <th scope="col">Reason</th>
+                            <th scope="col">Host</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    {% for e in currentres %}
+                    <tr>
+                        <td>{{e.start | date:"d/M"}}</td>
+                        <td>{{e.end | date:"d/M" | default:"n/a"}}</td>
+                        <td>{{e.comment}}</td>
+                        <td>
+                            <a href="{% url 'host' e.bookable.id %}">{{e.bookable.host.hostname}}</a><br/>
+                            <code>{{e.bookable.host.ip}}</code>
+                        </td>
+                        <td class="text-center table-success align-middle">Active</td>
+                    </tr>
+                    {% endfor %}
+                    {% for e in upcomingres %}
+                    <tr>
+                        <td>{{e.start | date:"d/M"}}</td>
+                        <td>{{e.end | date:"d/M" | default:"n/a"}}</td>
+                        <td>{{e.comment}}</td>
+                        <td>
+                            <a href="{% url 'host' e.bookable.id %}">{{e.bookable.host.hostname}}</a><br/>
+                            <code>{{e.bookable.host.ip}}</code>
+                        </td>
+                        <td class="text-center table-warning align-middle">Starts in {{e.start | timeuntil}}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for e in pastres %}
+                    <tr>
+                        <td>{{e.start | date:"d/M"}}</td>
+                        <td>{{e.end | date:"d/M"}}</td>
+                        <td>{{e.comment}}</td>
+                        <td>
+                            <a href="{% url 'host' e.bookable.id %}">{{e.bookable.host.hostname}}</a><br/>
+                            <code>{{e.bookable.host.ip}}</code>
+                        </td>
+                        <td class="text-center table-secondary align-middle">Ended {{e.end | timesince}} ago</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not upcomingres and not currentres and not pastres %}
+                        <tr>
+                            <td colspan="4" class="text-center">No reservations to show.</td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+
+{% endblock %}

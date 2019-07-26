@@ -1,0 +1,49 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="container">
+    <div style="float: right;">
+        <span class="mr-3">Display:</span>
+        <div class="btn-group">
+            <a class="btn btn-outline-primary active" href="#">Hosts</a>
+            <a class="btn btn-outline-secondary" href="{% url 'liveunknown' %}">Unknown</a>
+            <a class="btn btn-outline-warning" href="{% url 'livedash' %}">Alerts</a>
+        </div>
+    </div>
+    <h2>Live table</h2>
+    <p>This table shows all hosts in the database, including those that are not bookable and entries that are unknown.</p>
+</div>
+<div id="table">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-4 card">
+            <div id="loader-body" class="card-body text-center">
+                <div class="spinner-border mb-4" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p>Give us a few seconds, this one hits a lot of tables!</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block pagescripts %}
+<script>
+$(document).ready(() => {
+    $.ajax({
+        url: "{% url 'livehosttable' %}",
+        method: "GET",
+        success: (data, textStatus) => {
+            $('#table').html(data);
+        },
+        error: (textStatus, errorThrown) => {
+            $('#loader-body').html(
+                `<h5>Error</h5><p>Something went wrong loading this table...</p><p><code>${textStatus}</code></p>`
+            )
+        }
+    })
+})
+</script>
+{% endblock %}

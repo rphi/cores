@@ -1,0 +1,267 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10">
+            <h2>Booking</h2>
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                    <th scope="col">Hostname</th>
+                    <th scope="col">Primary IP</th>
+                    <th scope="col">Hardware</th>
+                    <th scope="col">Cards</th>
+                    <th scope="col">Lab</th>
+                    <th scope="col">Book?</th>
+                    </tr>
+                </thead>
+                <tbody id="bt-body">
+                    
+                </tbody>
+                <tr>
+                    <td id="bt-status" class="text-center" colspan="6">
+                        <div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="col-md-2 filter-options">
+            <span class="badge badge-secondary badge-sm float-right">BETA</span>
+            <h3>Filters</h3>
+            <div class="card p-3 filter-toggles">
+                <div class="custom-control custom-switch my-1">
+                    <input class="custom-control-input" type="checkbox" value="" id="free-toggle" data-query="free" data-value="1" onclick="toggleFilter()">
+                    <label class="custom-control-label" for="free-toggle">
+                        Only show free now
+                    </label>
+                </div>
+                <div class="custom-control custom-switch my-1">
+                    <input class="custom-control-input" type="checkbox" value="" id="reserved-toggle" data-query="nores" data-value="1" onclick="toggleFilter()">
+                    <label class="custom-control-label" for="reserved-toggle">
+                        Hide reserved hosts
+                    </label>
+                </div>
+                <div class="custom-control custom-switch my-1">
+                    <input class="custom-control-input" type="checkbox" value="" id="mine-toggle" data-query="mine" data-value="1" onclick="toggleFilter()">
+                    <label class="custom-control-label" for="mine-toggle">
+                        Only show my hosts
+                    </label>
+                </div>
+                <div class="custom-control custom-switch my-1">
+                    <input class="custom-control-input" type="checkbox" value="" id="mygroup-toggle" data-query="mygroup" data-value="1" onclick="toggleFilter()">
+                    <label class="custom-control-label" for="mygroup-toggle">
+                        Only show my group
+                    </label>
+                </div>
+                <div class="custom-control custom-switch my-1">
+                    <input class="custom-control-input" type="checkbox" value="" id="ipsort-toggle" data-query="ipsort" data-value="1" onclick="toggleFilter()">
+                    <label class="custom-control-label" for="ipsort-toggle">
+                        Sort by IP address
+                    </label>
+                </div>
+                <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="resetFilters()">Reset all filters</button>
+            </div>
+            <div class="card p-3">
+                <h5>Location</h5>
+                {% if buildings %}
+                <ul class="filter-select" id="location-select">
+                    {% for b in buildings %}
+                    <li>
+                        <a data-query="building" data-value="{{b.id}}" onclick="toggleFilter()" href="javascript:void(null);">{{b.code}}</a>
+                        {% if b.labs %}
+                        <ul>
+                            {% for l in b.labs.all %}<li><a data-query="lab" data-value="{{l.id}}" onclick="toggleFilter()" href="javascript:void(null);">{{l.name}}</a></li>{% endfor %}
+                        </ul>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No buildings to show</p>
+                {% endif %}
+            </div>
+            <div class="card p-3">
+                <h5>Type</h5>
+                {% if host_types %}
+                <ul class="filter-select" id="host-select">
+                    {% for t in host_types %}
+                    <li>
+                        <a data-query="htype" data-value="{{t.id}}" onclick="toggleFilter()" href="javascript:void(null);">{{t.name}}</a>
+                        {% if t.hardwares %}
+                        <ul>
+                            {% for h in t.hardwares.all %}<li><a data-query="hw" data-value="{{h.id}}" onclick="toggleFilter()" href="javascript:void(null);">{{h.name}}</a></li>{% endfor %}
+                        </ul>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No types to show</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+<script>
+
+var query = null;
+
+$(document).ready(() => {
+    init();
+})
+
+$(window).bind( 'hashchange', init);
+$('.filter-toggles input').bind()
+
+function init() {
+    parseQueryParams();
+    loadtable();
+    refreshFilterStyles();
+}
+
+function parseQueryParams() {
+    var string = (window.location.href.split('#')[1] || '');
+    if (string) {
+        query = string.split('&').reduce((total, item) => {
+            var kv = item.split('=');
+            total[kv[0]] = kv[1].split(',');
+            return total;
+        }, {});
+    } else {
+        query = {};
+    }
+}
+
+function buildQueryString() {
+    return Object.keys(query).reduce((o, k) => {o.push(k+'='+query[k].join(',')); return o;}, []).join('&');
+}
+
+function loadtable() {
+    $('#bt-body').html('');
+    gethosts();
+}
+
+function gethosts() {
+    $('#bt-status').html('<div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div>');
+    $.ajax({
+        url: `/api/booking/bookable/?limit=50&offset=${$('#bt-body > tr').length}&active=1&${buildQueryString()}`,
+        method: "GET",
+        success: (data, textStatus) => {
+            if (data.results.length == 0) {
+                $('#bt-status').html('No results to show');
+                return
+            }
+            $('#bt-body').append(buildrows(data.results).join());
+            if (data.next == null) {
+                $('#bt-status').html(`Showing ${$('#bt-body > tr').length} of ${data.count}`);
+            }
+            else {
+                $('#bt-status').html(
+                    `<button type="button" class="btn btn-primary" onclick="gethosts()">Load more</button><p class="my-1">Showing ${$('#bt-body > tr').length} of ${data.count}</p>`
+                )
+            }
+        },
+        error: (error) => {
+            console.log(error);
+            $('#bt-status').html(
+                `Oh no. We were unable to load the booking table. Error: <code>${error.statusText}</code> Please refresh the page.`
+            )
+        }
+    })
+}
+
+function buildrows(bookables) {
+    rows = [];
+    for (var i in bookables) {
+        var b = bookables[i];
+        var button = null;
+        if (b['status'] != 'active') {
+            button = `<a class="btn btn-sm btn-outline-dark" href="/booking/host/${b['id']}">${b['status']}</a>`
+        }
+        else if (b['reserved']) {
+            button = `<a class="btn btn-outline-warning btn-sm" href="/booking/host/${b['id']}">reserved</a>`
+        }
+        else if (b['booked']) {
+            button = `<a class="btn btn-danger btn-sm" href="/booking/host/${b['id']}">Book for later</a>
+                        <div class="text-muted small">${b['booked']}</div>`
+        }
+        else {
+            button = `<a class="btn btn-sm btn-success" href="/booking/host/${b['id']}">Book NOW</a>`
+        }
+        let cardstring = [...new Set(b['cards'].map(c => c['cardtype__name']))].join(', ');
+        rows.push(
+            `<tr>
+                <td>${b['hostname']}</td>
+                <td><code>${b['ip']}</code></td>
+                <td>${b['hardware']}</td>
+                <td>${cardstring}</td>
+                <td>${b['rack']}</td>
+                <td>${button}</td>
+            </tr>`
+        );
+    }
+    return rows;
+}
+
+function toggleFilter() {
+    var sender = $(event.target);
+    let type = sender.attr('data-query');
+    let id = sender.attr('data-value');
+    if (sender.hasClass('filter-selected')){
+        // deselect that filter type
+        sender.removeClass('filter-selected');
+        query[type] = query[type].filter((a) => a != id);
+        if (query[type].length == 0) {
+            delete query[type];
+        }
+    } else {
+        // select filter
+        sender.addClass('filter-selected');
+        if (type in query) {
+            query[type].push(id);
+        } else {
+            query[type] = [id];
+        }
+    }
+    history.pushState(null, null, '#'+buildQueryString());
+    loadtable();
+}
+
+function refreshFilterStyles() {
+    $('.filter-select li > a').removeClass('filter-selected');
+    $('.filter-toggles [type=checkbox]').prop('checked', false).removeClass('filter-selected');
+    Object.entries(query).forEach( (entry) => {
+        entry[1].forEach((id) => {
+            $(`.filter-options [data-query=${entry[0]}][data-value=${id}]`).addClass('filter-selected').prop('checked', true);
+        });
+    });
+}
+
+function resetFilters() {
+    query = {};
+    history.pushState(null, null, '#'+buildQueryString());
+    refreshFilterStyles();
+    loadtable();
+}
+
+</script>
+{% endblock %}
+
+{% block pagestyles %}
+<style>
+.filter-select a.filter-selected {
+    background-color: red;
+}
+</style>
+{% endblock %}

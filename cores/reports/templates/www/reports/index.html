@@ -1,0 +1,20 @@
+{% extends 'www/_base.html' %}
+
+{% block content %}
+
+<div class="container">
+    
+    <h1>Reporting</h1>
+
+    <p>Available reports:</p>
+    <ul>
+        <li><a href="{% url 'usage' %}">Utilization report</a></li>
+        <li><a href="{% url 'assetsummary' %}">Asset summary</a></li>
+        <li><a href="{% url 'longreservations' %}">Long running reservations</a></li>
+        <li><a href="{% url 'liveunknown' %}">Unknown hosts</a> (moved to live)</li>
+        <li><a href="{% url 'livelist' %}">Hosts by lab</a> (moved to live)</li>
+    </ul>
+
+</div>
+
+{% endblock %}

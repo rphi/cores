@@ -1,0 +1,86 @@
+{% extends 'www/_base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <h4>Hi, this is Cores.</h4>
+            <br/>
+            <a class="btn btn-lg btn-block btn-success py-4" href="{% url 'search' %}">Go to full host listing</a>
+        </div>
+        <div class="col-md-8">
+            <div class="alert alert-secondary">
+                <h4>You're not logged in.</h4>
+                <p>To get the most from Cores and to be able to book or reserve hosts, please login.</p>
+                <a class="btn btn-primary float-right" href="/account/login">Log into Cores &gt;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-2 mt-3">
+        <h5>Quick-book</h5>
+        <p>These machines are free and ready to book right now.</p>
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Hostname</th>
+                    <th scope="col">Primary IP</th>
+                    <th scope="col">Hardware</th>
+                    <th scope="col">Cards</th>
+                    <th scope="col">Lab</th>
+                    <th scope="col">Book?</th>
+                </tr>
+            </thead>
+            <tbody id="qb-body">
+                <tr>
+                    
+                </tr>
+            </tbody>
+            <tr>
+                <td id="qb-status" class="text-center" colspan="6">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+<script>
+$(document).ready(() => {
+    $.ajax({
+        url: "/api/booking/bookable/?active=1&free=1&nores=1&limit=20",
+        method: "GET",
+        success: (data, textStatus) => {
+            if (data.count == 0) {
+                $('#qb-body').html('<tr><td class="text-center" colspan="6">No free hosts right now</td></tr>');
+                return
+            }
+            var entries = [];
+            for (var b in data.results) {
+                entries.push(
+                    `<tr>
+                        <td>${data.results[b]['hostname']}</td>
+                        <td><code>${data.results[b]['ip']}</code></td>
+                        <td>${data.results[b]['hardware']}</td>
+                        <td>${data.results[b]['cards']}</td>
+                        <td>${data.results[b]['rack']}</td>
+                        <td><a class="btn btn-success btn-sm" href="/booking/host/${data.results[b]['id']}">Book</a></td>
+                    </tr>`
+                )
+            }
+            $('#qb-body').html(entries.join());
+            $('#qb-status').html(
+                `<a class="btn btn-primary" href="/booking/search/#free=1">View all</a><p class="my-1">Showing ${data.results.length} of ${data.count}</p>`
+            )
+        }
+    })
+})
+</script>
+{% endblock %}

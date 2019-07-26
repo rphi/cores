@@ -1,0 +1,101 @@
+version: '3.2'
+
+volumes:
+  static_volume:
+  postgres_data:
+  mkdocs_site:
+
+services:
+
+  cores:
+    build:
+      context: ./cores
+    links:
+      - postgres:postgres
+    environment:
+      # basic setup
+      - HOSTNAME=cores # which hostname should django accept requests from (in addition to localhost)
+      - SECRET_KEY=uhriagseruiguaeiorghozagraioehgr # make some entropy
+      - DEBUG=False # turn on the *very* (dangerously) verbose error pages
+
+      # database
+      - POSTGRES_HOST=postgres # hostname of psql in docker stack
+      - POSTGRES_PASSWORD=password # pick a password
+      - POSTGRES_USER=django
+      
+      # authentication (LDAP or Kerberos)
+      - LDAP_AUTH=False # enable LDAP
+      - LDAP_AUTH_DIRECT=False # enable direct bind LDAP (only if normal LDAP not enabled)
+      - LDAP_URI=ldap://dc01.contoso.com # where to bind to
+      - LDAP_BIND_DN=bind-user # creds for queries
+      - LDAP_BIND_PASS=password
+      - LDAP_SEARCH_PATH=OU=Users,OU=All Sites,DC=Contoso,DC=Com # where to search for users
+      - LDAP_LOGGING=False # extra debug logs
+
+      - KERBEROS_AUTH=False # enable (experimental) Kerberos authentication
+      - KERBEROS_REALM=contoso.com
+      - KERBEROS_SERVICE=dc02.contoso.com/FINANCE
+
+      # mail
+      - SMTP_SERVER=False # set server here if you want emails
+      - SMTP_PORT=25
+      - SMTP_FROM=noreply@cores.local
+    depends_on:
+      - postgres
+    restart: always
+    volumes:
+      - static_volume:/srv/static
+  
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=cores
+      - POSTGRES_USER=django
+      - POSTGRES_PASSWORD=password
+    command: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      
+  nginx:
+    build:
+      context: ./nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - static_volume:/srv/static
+      - mkdocs_site:/srv/docs
+    depends_on:
+      - cores
+      - docs
+    restart: always
+  
+  docs:
+    image: squidfunk/mkdocs-material
+    volumes:
+      - type: bind
+        source: ./mkdocs
+        target: /docs
+      - mkdocs_site:/site
+    command: build
+
+  livesync:
+    build:
+      context: ./cores-livesync
+    environment:
+      # IMPORTANT:
+      # Do not set SYNC_ENABLED=true unless you have got your inventory setup and generated
+      # an auth token for the livesync to talk to the API
+      - SYNC_ENABLED=false
+
+      - CORES_INSTANCE=http://nginx # internal url of app within compose stack
+      - CORES_TOKEN=[authentication token] # created through Django admin
+      - CORES_IDENT=lab-livesync # whatever you want to call this source
+      - SSHPASS= # root password for .90 boxes for the ssh/scp bot
+    depends_on:
+      - cores
+      - nginx
+    command: ./start.sh
+    volumes:
+      - .cores-livesync/logs:/cores-log/

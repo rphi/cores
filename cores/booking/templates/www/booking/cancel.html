@@ -1,0 +1,76 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container">
+    <h2>Cancelling your {% if what == 'b' %}booking{% elif what == 'r' %}reservation{% endif %} <span style="font-family: monospace">{{target}}</span>:</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-5">
+            <div class="card p-3">
+                <h5>Details</h5>
+                <ul>
+                    <li><strong>Hostname:</strong> {{target.bookable.host.hostname}}</li>
+                    <li><strong>IP:</strong> <code>{{target.bookable.host.ip}}</code></li>
+                    <li><strong>Serial:</strong> {{target.bookable.host.serial_no}}</li>
+                    <li><strong>Asset:</strong> {{target.bookable.host.asset_no}}</li>
+                    <li><strong>Disks:</strong> {{target.bookable.host.diskvendor}}</li>
+                    <li><strong>Hardware:</strong> {{target.bookable.host.hardware}}</li>
+                    <li><strong>Rack:</strong> {{target.bookable.host.rack}}</li>
+                    <li><strong>Owner: </strong> {{target.bookable.host.owner}}</li>
+                    <li><strong>Group: </strong> {{target.bookable.host.group}}</li>
+                    <li><strong>Details:</strong> {{target.bookable.host.details}}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <p>You are cancelling an entry for this host with the following details:</p>
+            <ul>
+                <li><strong>Start:</strong> {{target.start}}</li>
+                <li><strong>End:</strong> {{target.end}}</li>
+                <li><strong>Comment:</strong> {{target.comment}}</li>
+            </ul>
+
+            <h4>Are you sure?</h4>
+            {% if inprogress %}
+            <div class="alert alert-danger">
+                <strong>Error:</strong> You cannot delete a booking that's currently in progress.
+            </div>
+            {% endif %}
+            <form method="POST">
+                {% csrf_token %}
+                <a class="btn btn-secondary btn-lg" href="{% url 'dash' %}">Abort and go back</a>
+                <button class="btn btn-danger btn-lg" type="submit"
+                {% if inprogress %}disabled{% endif %}
+                >Delete this</a>
+            </form>
+            
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<script>
+$('.input-daterange').datepicker({
+    format: "yyyy-mm-dd",
+    startDate: Date(),
+    maxViewMode: 1,
+    todayBtn: true,
+    language: "en-GB",
+    todayHighlight: true
+});
+</script>
+
+{% endblock %}
+
+{% block pagestyles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" />
+<link rel="stylesheet" href="{% static 'booking/css/availabilitytable.css' %}"/>
+{% endblock %}

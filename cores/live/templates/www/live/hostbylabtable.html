@@ -1,0 +1,43 @@
+<div class="sticky-top mb-2">
+    <div class="navbar navbar-default navbar-light bg-light">
+        <div class="container">
+            Labs:
+            <ul class="list-inline mb-0">
+                {% for key in labhosts %}
+                <li class="list-inline-item"><a href="#{{key | slugify}}">{{key}}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+            <th scope="col">Hostname</th>
+            <th scope="col">Primary IP</th>
+            <th scope="col">Hardware</th>
+            <th scope="col">Last seen</th>
+            <th scope="col">Status</th>
+            <th scope="col">Bookable?</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, hosts in labhosts.items %}
+            <tr>
+                <th id="{{key | slugify}}" colspan="6" class="table-primary text-center">Location: {{key | default:'Unknown'}}</th>
+            </tr>
+            {% for h in hosts %}
+            <tr>
+            <th scope="row">{{h.hostname}}</th>
+            <td>{{h.ip.ip}}</td>
+            <td>{{h.hardware}}</td>
+            <td>{{h.lastseen}}</td>
+            <td>{{h.status}}</td>
+            <td>{{h.bookable | yesno}}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

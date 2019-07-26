@@ -1,0 +1,17 @@
+{
+    "agentident": "<id of agent performing the scan>",
+    "results": [
+        {
+            "nic": "<nic db id>",
+            "ip": "<ip>"
+        },
+        {
+            "nic": "<nic db id>",
+            "ip": "<ip>"
+        },
+        {
+            "nic": "<nic db id>",
+            "ip": "<ip>"
+        }
+    ]
+}

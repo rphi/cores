@@ -1,0 +1,54 @@
+{% extends 'www/_base.html' %}
+{% load bootstrap4 %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row align-items-center justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Fixing location conflict
+                </div>
+                <div class="card-body">
+                    <p>
+                        Host <code>{{hostname}}</code> / <code>{{ip}}</code> seems to have moved from <code>{{oldrack}}</code> to <code>{{newlab | default:'unknown'}}</code>.
+                    </p>
+
+                    {% if nsc %}
+                    <p>
+                        There is also an attached NIC scan conflict. This host's IP appears to have changed from <code>{{nsc.nic.ip}}</code> to <code>{{nsc.newip}}</code>
+                        on {{nsc.scan.timestamp}}
+
+                        {% if nsc.status is 'new' %}<em>This conflict is has not been dealt with yet.</em>
+                        {% elif nsc.status is 'resolved' %}<em>This conflict has been marked as resolved</em>
+                        {% elif nsc.status is 'ignored'%}<em>This conflict has been ignored.</em>{% endif %}
+                    </p>
+                    {% endif %}
+
+                    <p><strong>Where is it now?</strong></p>
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="form-row mb-3">
+                            <select class="form-control col-sm-7" name="lab">
+                                <option>select a lab</option>
+                                {% for lab in labs %}
+                                <option value="{{lab.id}}" {% if lab.id is newlab.id %}selected readonly{% endif %}>{{lab}}</option>
+                                {% endfor %}
+                            </select>
+                            <input name="rack" type="number" class="form-control col-sm-5" placeholder="rack no"/>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <a href="{% url 'livedash' %}" class="btn btn-secondary">Cancel and go back</a>
+                        <p class="mt-3 small text-muted">Updating the location will mark this location conflict as resolved. Any NIC conflicts will remain open.</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

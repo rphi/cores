@@ -1,0 +1,58 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="container">
+    <h2>Asset report</h2>
+    <h3>Hosts</h3>
+    <table class="table">
+        <thead>
+            <tr>
+            <th scope="col">ISS#</th>
+            <th scope="col">Primary NIC</th>
+            <th scope="col">Lastseen</th>
+            <th scope="col">Location</th>
+            <th scope="col">Serial</th>
+            <th scope="col">Asset no.</th>
+            <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in hosts %}
+            <tr>
+            <th scope="row">{{h.hostname}}</th>
+            <td>{{h.getprimarynic.mac}}</td>
+            <td>{{h.lastseen}}</td>
+            <td>{{h.rack}}</td>
+            <td>{{h.serial_no}}</td>
+            <td>{{h.asset_no}}</td>
+            <td>{{h.status}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Cards</h3>
+    <table class="table">
+        <thead>
+            <tr>
+            <th scope="col">Cardtype</th>
+            <th scope="col">Details</th>
+            <th scope="col">Asset no.</th>
+            <th scope="col">Inside</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cards %}
+            <tr>
+            <th>{{c.cardtype}}</th>
+            <td>{{c.details}}</td>
+            <td>{{c.asset_no}}</td>
+            <td>{{c.host}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

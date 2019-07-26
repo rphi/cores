@@ -1,0 +1,170 @@
+{% extends 'www/_base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container">
+    {% if bookable.status == 'active' and not bookable.check_reserved %}
+        <a class="btn btn-outline-danger btn-lg float-right ml-1" href="{% url 'reserve' bookable.id %}">Reserve me</a>
+        <a class="btn btn-primary btn-lg float-right" href="{% url 'book' bookable.id %}">Create booking</a>
+    {% endif %}
+    <h2>Bookable host <span style="font-family: monospace">{{bookable.host.hostname}}</span> details</h2>
+
+    {% if bookable.status != 'active' %}
+    <div class="alert alert-danger" role="alert">
+        <strong>This item is currently unbookable</strong>. Reason: {{bookable.status}}
+    </div>
+    {% elif bookable.check_reserved %}
+    <div class="alert alert-danger" role="alert">
+        <strong>This item is currently reserved</strong>. Reason: {{bookable.get_current_reservation.comment}} - Owner {{bookable.get_current_reservation.owner}} - Since {{bookable.get_current_reservation.start}}
+    </div>
+    {% else %}
+    <h5>Availability</h5>
+    <table class="table availability_table">
+        <tr>
+            {% for a in availability %}
+            <td class="{% if a %}free{% else %}busy{% endif %}"></td>
+            {% endfor %}
+        </tr>
+        <tr>
+            <td>Today</td>
+            <td>+1d</td>
+            <td>+2d</td>
+            <td>+3d</td>
+            <td>+4d</td>
+            <td>+5d</td>
+            <td>+6d</td>
+            <td>+7d</td>
+            <td>+8d</td>
+            <td>+9d</td>
+            <td>+10d</td>
+            <td>+11d</td>
+            <td>+12d</td>
+            <td>+13d</td>
+        </tr>
+    </table>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card p-3">
+                <h5>Details</h5>
+                <ul>
+                    <li><strong>Hostname:</strong> {{bookable.host.hostname}}</li>
+                    <li><strong>IP:</strong> <code>{{bookable.host.ip}}</code></li>
+                    <li><strong>Serial:</strong> {{bookable.host.serial_no}}</li>
+                    <li><strong>Asset:</strong> {{bookable.host.asset_no}}</li>
+                    <li><strong>Disks:</strong> {{bookable.host.diskvendor}}</li>
+                    <li><strong>Hardware:</strong> {{bookable.host.hardware}}</li>
+                    <li><strong>Rack:</strong> {{bookable.host.rack}}</li>
+                    <li><strong>Owner: </strong> {{bookable.owner}}</li>
+                    <li><strong>Group: </strong> {{bookable.group}}</li>
+                    <li><strong>Details:</strong> {{bookable.host.details}}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-7">
+                <div class="card p-3">
+                    <h5>NICs</h5>
+                    {% if nics %}
+                    <ul>
+                        {% for nic in nics %}
+                        <li>
+                            {% if nic.primary %}<span class="badge badge-success">Primary</span>{% endif %}
+                            {% if nic.integrated %}<span class="badge badge-secondary">Integrated</span>{% endif %}
+                            {% if nic.management %}<span class="badge badge-info">Management</span>{% endif %}
+                            <code>{{nic.mac}} / {{nic.ip}}</code>
+                            <small class="text-muted">{{nic.model}}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No NICs assigned to this host.</p>
+                    {% endif %}
+                </div>
+                <div class="card p-3 mt-2">
+                    <h5>Cards</h5>
+                    {% if cards %}
+                    <ul>
+                        {% for card in cards %}
+                        <li>
+                            {{card.cardtype}} - <small class="text-muted">{{card.details}}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No cards assigned to this host.</p>
+                    {% endif %}
+                </div>
+            </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="card p-3 mt-3">
+                <h5>Bookings</h5>
+                {% if calendar %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">From</th>
+                            <th scope="col">To</th>
+                            <th scope="col">Owner</th>
+                            <th scope="col">Reason</th>
+                            <th scope="col">Booked at</th>
+                        </tr>
+                    </thead>
+                    {% for e in calendar %}
+                    <tr>
+                        <td>{{e.start}}</td>
+                        <td>{{e.end}}</td>
+                        <td><a href="{% url 'userlookup-detail' e.owner.id %}">{{e.owner}}</a></td>
+                        <td>{{e.comment}}</td>
+                        <td>{{e.timestamp}}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                <p>This host doesn't have any upcoming bookings.</p>
+                {% endif %}
+            </div>
+
+            <div class="card p-3 mt-3">
+                    <h5>Reservations</h5>
+                    {% if reservations %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">From</th>
+                                <th scope="col">To</th>
+                                <th scope="col">Owner</th>
+                                <th scope="col">Reason</th>
+                                <th scope="col">Booked at</th>
+                            </tr>
+                        </thead>
+                        {% for e in reservations %}
+                        <tr>
+                            <td>{{e.start}}</td>
+                            <td>{{e.end}}</td>
+                            <td><a href="{% url 'userlookup-detail' e.owner.id %}">{{e.owner}}</a></td>
+                            <td>{{e.comment}}</td>
+                            <td>{{e.timestamp}}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    {% else %}
+                    <p>This host doesn't have any upcoming reservations.</p>
+                    {% endif %}
+                </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block pagescripts %}
+{% endblock %}
+
+{% block pagestyles %}
+<link rel="stylesheet" href="{% static 'booking/css/availabilitytable.css' %}"/>
+{% endblock %}
